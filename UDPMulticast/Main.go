@@ -26,8 +26,14 @@ func main() {
 	group := os.Args[1]
 	port := "9999"
 
+	ip := net.ParseIP(group)
+	if ip == nil {
+		fmt.Println("Invalid multicast address")
+		return
+	}
+
 	// Присоединение к multicast-группе для приема сообщений
-	addr, err := net.ResolveUDPAddr("udp", group+":"+port)
+	addr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(group, port))
 	if err != nil {
 		panic(err)
 	}
@@ -39,25 +45,26 @@ func main() {
 	}
 	defer listenConn.Close()
 
-	// Отправка multicast-сообщения
-	sendConn, err := net.DialUDP("udp", nil, addr)
+	// Поиск первого доступного интерфейса для IPv6 multicast
+	var sendConn *net.UDPConn
+	if ip.To4() == nil && addr.IP.IsMulticast() {
+		iface, err := getFirstMulticastInterface()
+		if err != nil {
+			fmt.Println("Error finding multicast interface:", err)
+			return
+		}
+		addr.Zone = iface.Name
+	}
+
+	// Соединение для отправки multicast-сообщения
+	sendConn, err = net.DialUDP("udp", nil, addr)
 	if err != nil {
 		fmt.Println("Error setting up sender:", err)
 		return
 	}
 	defer sendConn.Close()
 
-	go func() {
-		for {
-			_, err = sendConn.Write([]byte("Hello Multicast from Go!"))
-			if err != nil {
-				fmt.Println("Error writing to UDP:", err)
-				return
-			}
-
-			time.Sleep(messageInterval)
-		}
-	}()
+	go sendMessages(sendConn)
 
 	go receiveMessages(listenConn)
 
@@ -65,6 +72,17 @@ func main() {
 	for {
 		time.Sleep(timeoutDuration)
 		printLiveCopies()
+	}
+}
+
+func sendMessages(conn *net.UDPConn) {
+	for {
+		_, err := conn.Write([]byte("Hello"))
+		if err != nil {
+			fmt.Println("Error writing to UDP:", err)
+			return
+		}
+		time.Sleep(messageInterval)
 	}
 }
 
@@ -78,7 +96,7 @@ func receiveMessages(conn *net.UDPConn) {
 			return
 		}
 		message := strings.TrimSpace(string(buf[:n]))
-		if strings.HasPrefix(message, "Hello Multicast") {
+		if strings.HasPrefix(message, "Hello") {
 			liveCopies[src.String()] = time.Now()
 		}
 	}
@@ -89,10 +107,25 @@ func printLiveCopies() {
 	fmt.Println("Live copies:")
 	for ip, lastSeen := range liveCopies {
 		if time.Since(lastSeen) > timeoutDuration {
+			fmt.Printf("%v disconnected\n", ip)
 			delete(liveCopies, ip)
 			continue
 		}
 		fmt.Printf("- %s\n", ip)
 	}
 	fmt.Println()
+}
+
+// Получение первого доступного интерфейса для multicast
+func getFirstMulticastInterface() (*net.Interface, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagMulticast != 0 && iface.Flags&net.FlagUp != 0 {
+			return &iface, nil
+		}
+	}
+	return nil, fmt.Errorf("no multicast interface found")
 }
