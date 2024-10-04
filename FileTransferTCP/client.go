@@ -7,19 +7,9 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"sync"
-	"time"
 )
 
 const clientFileNameMaxLength = 4096
-
-type FileHandler struct {
-	conn      net.Conn
-	fileName  string
-	fileSize  int64
-	startTime time.Time
-	mutex     sync.Mutex
-}
 
 func main() {
 	if len(os.Args) < 4 {
@@ -79,5 +69,18 @@ func main() {
 			return
 		}
 		conn.Write(buf[:n])
+	}
+
+	status := make([]byte, 7)
+	_, err = conn.Read(status)
+	if err != nil {
+		fmt.Println("Error reading from server:", err)
+		return
+	}
+
+	if string(status) == "success" {
+		fmt.Println("File transfer completed successfully")
+	} else {
+		fmt.Println("File transfer failed")
 	}
 }

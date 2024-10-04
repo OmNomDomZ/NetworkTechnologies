@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const serverFileNameMaxLength = 4096
@@ -37,10 +38,17 @@ func main() {
 func handleClient(conn net.Conn) {
 	defer conn.Close()
 
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+			conn.Write([]byte("failure"))
+		}
+	}()
+
 	fileNameBuf := make([]byte, serverFileNameMaxLength)
 	_, err := conn.Read(fileNameBuf)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		fmt.Println("Error reading file name:", err.Error())
 		return
 	}
 	fileName := strings.TrimRight(string(fileNameBuf), "\x00")
@@ -48,9 +56,10 @@ func handleClient(conn net.Conn) {
 	var fileSize int64
 	err = binary.Read(conn, binary.LittleEndian, &fileSize)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		fmt.Println("Error reading file size:", err.Error())
 		return
 	}
+	fmt.Printf("Receiving file: %s, size: %d bytes\n", fileName, fileSize)
 
 	err = os.MkdirAll(uploadDir, os.ModePerm)
 	if err != nil {
@@ -69,6 +78,10 @@ func handleClient(conn net.Conn) {
 
 	buff := make([]byte, 1024)
 	var receiveBytes int64
+	startTime := time.Now()
+
+	go getSpeed(conn, &receiveBytes, fileName, fileSize, startTime)
+
 	for {
 		n, err := conn.Read(buff)
 		if err != nil {
@@ -82,5 +95,40 @@ func handleClient(conn net.Conn) {
 		file.Write(buff[:n])
 	}
 
-	fmt.Printf("File %s saved, get %d bytes\n", fileName, receiveBytes)
+	fmt.Printf("File %s saved, received %d bytes\n", fileName, receiveBytes)
+
+	checkSize(conn, receiveBytes, fileSize)
+}
+
+func checkSize(conn net.Conn, receiveBytes int64, fileSize int64) {
+	if receiveBytes == fileSize {
+		_, err := conn.Write([]byte("success"))
+		if err != nil {
+			fmt.Println("Error writing:", err.Error())
+		}
+	} else {
+		_, err := conn.Write([]byte("failure"))
+		if err != nil {
+			fmt.Println("Error writing:", err.Error())
+		}
+	}
+}
+
+func getSpeed(conn net.Conn, receiveBytes *int64, fileName string, fileSize int64, startTime time.Time) {
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			elapsed := time.Since(startTime).Seconds()
+			speed := float64(*receiveBytes) / elapsed
+			fmt.Printf("File: %s | Instant speed: %.2f bytes/sec | Received: %d bytes\n", fileName, speed, *receiveBytes)
+
+			if *receiveBytes >= fileSize {
+				checkSize(conn, *receiveBytes, fileSize)
+				return
+			}
+		}
+	}
 }
