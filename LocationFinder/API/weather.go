@@ -23,7 +23,7 @@ func GetWeather(point Point) {
 	}
 
 	q := req.URL.Query()
-	q.Add("appid", "ff34ba2f6c8251ba991cf890d777e070")
+	q.Add("appid", "")
 	q.Add("lat", fmt.Sprintf("%f", point.Lat))
 	q.Add("lon", fmt.Sprintf("%f", point.Lng))
 	q.Add("units", "metric")

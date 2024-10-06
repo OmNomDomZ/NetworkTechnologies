@@ -31,7 +31,7 @@ func GetLocation(location string) GraphhopperAnswer {
 
 	q := req.URL.Query()
 	q.Add("q", location)
-	q.Add("key", "a98f475e-eaa3-4145-b8be-67aee6cdec09")
+	q.Add("key", "")
 	req.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
