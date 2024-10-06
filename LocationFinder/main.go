@@ -1,60 +1,53 @@
 package main
 
 import (
-	"encoding/json"
+	"bufio"
 	"fmt"
-	"io"
-	"net/http"
+	"locations/API"
+	"os"
+	"strconv"
+	"strings"
 )
 
-type Point struct {
-	Lat float64 `json:"lat"`
-	Lng float64 `json:"lng"`
-}
-
-type Location struct {
-	Point Point  `json:"point"`
-	Name  string `json:"name"`
-}
-
-type GraphhopperAnswer struct {
-	Hits []Location `json:"hits"`
-}
-
-func getLocation() {
-	req, err := http.NewRequest("GET", "https://graphhopper.com/api/1/geocode", nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	q := req.URL.Query()
-	q.Add("q", "Цветной проезд")
-	q.Add("key", "")
-	req.URL.RawQuery = q.Encode()
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var gha GraphhopperAnswer
-	err = json.Unmarshal(body, &gha)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for _, location := range gha.Hits {
-		fmt.Printf("Location: %s, Point %f, %f\n", location.Name, location.Point.Lat, location.Point.Lng)
-	}
-}
-
 func main() {
-	getLocation()
+	loc := strings.Join(os.Args[1:], " ")
+
+	locations := API.GetLocation(loc)
+	if len(locations.Hits) == 0 {
+		fmt.Println("No results found")
+		return
+	}
+
+	for i, location := range locations.Hits {
+		fmt.Printf("%v. Локация: %s, Страна: %s, Город: %s, Координаты %f, %f\n",
+			i, location.Name, location.Country, location.City, location.Point.Lat, location.Point.Lng)
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Введите номер выбранной локации: ")
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+
+	index, err := strconv.Atoi(input)
+	if err != nil || index > len(locations.Hits) || index < 0 {
+		fmt.Println("Неверный выбор")
+		return
+	}
+
+	selectedLocation := locations.Hits[index]
+	fmt.Printf("Вы выбрали: %s, %s, %s. Координаты: %f, %f\n\n",
+		selectedLocation.Name, selectedLocation.Country, selectedLocation.City, selectedLocation.Point.Lat, selectedLocation.Point.Lng)
+
+	API.GetWeather(selectedLocation.Point)
+	places := API.GetPlaces(selectedLocation.Point)
+
+	for i, place := range places.Results {
+		fmt.Printf("%v. id: %v, Название: %s, Сайт: %s\n",
+			i, place.Id, place.Title, place.SiteURL)
+	}
+
+	for _, place := range places.Results {
+		description := API.GetDescription(place.Id)
+		fmt.Printf("Название: %s\nОписание: %s\n\n", description.Title, description.Description)
+	}
 }
