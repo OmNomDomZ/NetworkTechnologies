@@ -16,10 +16,12 @@ type Weather struct {
 	}
 }
 
-func GetWeather(point Point) {
+func GetWeather(point Point, ch chan<- Weather) {
 	req, err := http.NewRequest("GET", "https://api.openweathermap.org/data/2.5/weather", nil)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Weather{}
+		return
 	}
 
 	q := req.URL.Query()
@@ -34,19 +36,26 @@ func GetWeather(point Point) {
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Weather{}
+		return
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Weather{}
+		return
 	}
 
 	var weather Weather
 	err = json.Unmarshal(body, &weather)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Weather{}
+		return
 	}
 
-	fmt.Printf("Погода: %s, Температура: %.2f\n", weather.Weather[0].Description, weather.Main.Temp)
+	ch <- weather
+	//fmt.Printf("Погода: %s, Температура: %.2f\n", weather.Weather[0].Description, weather.Main.Temp)
 }

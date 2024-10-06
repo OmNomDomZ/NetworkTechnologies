@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 )
 
@@ -13,10 +14,12 @@ type Description struct {
 	Description string `json:"description"`
 }
 
-func GetDescription(id int) Description {
+func GetDescription(id int, ch chan<- Description) {
 	req, err := http.NewRequest("GET", "https://kudago.com/public-api/v1.4/places/"+strconv.Itoa(id), nil)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Description{}
+		return
 	}
 
 	q := req.URL.Query()
@@ -26,19 +29,33 @@ func GetDescription(id int) Description {
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Description{}
+		return
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Description{}
+		return
 	}
 
 	var description Description
 	err = json.Unmarshal(body, &description)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Description{}
+		return
 	}
 
-	return description
+	descriptionStr := removeHTMLTags(description.Description)
+	description = Description{description.Title, descriptionStr}
+
+	ch <- description
+}
+
+func removeHTMLTags(input string) string {
+	re := regexp.MustCompile(`<.*?>`)
+	return re.ReplaceAllString(input, "")
 }

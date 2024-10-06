@@ -15,10 +15,12 @@ type Places struct {
 	} `json:"results"`
 }
 
-func GetPlaces(point Point) Places {
+func GetPlaces(point Point, ch chan<- Places) {
 	req, err := http.NewRequest("GET", "https://kudago.com/public-api/v1.4/places", nil)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Places{}
+		return
 	}
 
 	q := req.URL.Query()
@@ -32,19 +34,25 @@ func GetPlaces(point Point) Places {
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Places{}
+		return
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Places{}
+		return
 	}
 
 	var places Places
 	err = json.Unmarshal(body, &places)
 	if err != nil {
 		fmt.Println(err)
+		ch <- Places{}
+		return
 	}
 
-	return places
+	ch <- places
 }
