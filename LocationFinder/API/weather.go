@@ -57,5 +57,4 @@ func GetWeather(point Point, ch chan<- Weather) {
 	}
 
 	ch <- weather
-	//fmt.Printf("Погода: %s, Температура: %.2f\n", weather.Weather[0].Description, weather.Main.Temp)
 }

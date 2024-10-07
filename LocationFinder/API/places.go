@@ -7,12 +7,14 @@ import (
 	"net/http"
 )
 
+type Place struct {
+	Id      int    `json:"id"`
+	Title   string `json:"title"`
+	SiteURL string `json:"site_url"`
+}
+
 type Places struct {
-	Results []struct {
-		Id      int    `json:"id"`
-		Title   string `json:"title"`
-		SiteURL string `json:"site_url"`
-	} `json:"results"`
+	Results []Place `json:"results"`
 }
 
 func GetPlaces(point Point, ch chan<- Places) {

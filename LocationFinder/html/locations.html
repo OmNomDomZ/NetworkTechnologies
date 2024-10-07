@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Локации</title>
+</head>
+<body>
+<h1>Результаты поиска локаций</h1>
+
+{{ if .Hits }}
+<table border="1">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Название</th>
+        <th>Страна</th>
+        <th>Город</th>
+        <th>Координаты</th>
+        <th>Выбор</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $index, $loc := .Hits }}
+    <tr>
+        <td>{{ $index }}</td>
+        <td>{{ $loc.Name }}</td>
+        <td>{{ $loc.Country }}</td>
+        <td>{{ $loc.City }}</td>
+        <td>{{ $loc.Point.Lat }}, {{ $loc.Point.Lng }}</td>
+
+        <td>
+            <form action="/locationIformation" method="GET">
+                <input type="hidden" name="lat" value="{{ $loc.Point.Lat }}">
+                <input type="hidden" name="lng" value="{{ $loc.Point.Lng }}">
+                <input type="hidden" name="name" value="{{ $loc.Name }}">
+                <button type="submit">Выбрать</button>
+            </form>
+        </td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+{{ else }}
+<p>Локации не найдены.</p>
+{{ end }}
+</body>
+</html>

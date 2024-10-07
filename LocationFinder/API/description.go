@@ -49,8 +49,7 @@ func GetDescription(id int, ch chan<- Description) {
 		return
 	}
 
-	descriptionStr := removeHTMLTags(description.Description)
-	description = Description{description.Title, descriptionStr}
+	description.Description = removeHTMLTags(description.Description)
 
 	ch <- description
 }

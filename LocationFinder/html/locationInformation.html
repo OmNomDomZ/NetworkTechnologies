@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информация о месте</title>
+</head>
+<body>
+
+<h1><strong>{{.Name}}</strong></h1>
+<p>Координаты: <strong>{{ .Lat }}, {{ .Lng }}</strong></p>
+<h2>Погода в выбранной локации</h2>
+<h3>Погода</h3>
+<p>Описание: <strong>{{ .Description }}</strong></p>
+<p>Температура: <strong> {{ .Temp}} °C</strong> </p>
+
+<h2>Интересные места в выбранной локации</h2>
+{{ if .Results }}
+<table border="1">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Название</th>
+        <th>Сайт</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $index, $place := .Results }}
+    <tr>
+        <td>{{ $index }}</td>
+        <td>{{ $place.Title }}</td>
+        <td>{{ $place.SiteURL }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+{{ else }}
+<p>Места не найдены.</p>
+{{ end }}
+
+<h2>Описание интересных мест в выбранной локации</h2>
+{{ if .PlacesDescriptions }}
+<table border="1">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Название</th>
+        <th>Описание</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $index, $place := .PlacesDescriptions }}
+    <tr>
+        <td>{{ $index }}</td>
+        <td>{{ $place.Title }}</td>
+        <td>{{ $place.Description }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+{{ else }}
+<p>Информация не найдена.</p>
+{{ end }}
+
+</body>
+</html>
