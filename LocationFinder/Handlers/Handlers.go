@@ -9,13 +9,20 @@ import (
 	"sync"
 )
 
-var tmpl = template.Must(template.ParseFiles("html/locations.html", "html/locationInformation.html"))
+var tmpl = template.Must(template.ParseFiles("html/search.html", "html/locations.html", "html/locationInformation.html"))
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Добро пожаловать! Введите локацию в адресную строку.")
 }
 
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	err := tmpl.ExecuteTemplate(w, "search.html", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func LocationHandler(w http.ResponseWriter, r *http.Request) {
 	loc := r.URL.Query().Get("location")
 
 	if loc == "" {
