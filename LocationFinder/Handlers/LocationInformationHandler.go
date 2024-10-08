@@ -1,7 +1,6 @@
 package Handlers
 
 import (
-	"fmt"
 	"html/template"
 	"locations/API"
 	"net/http"
@@ -9,38 +8,7 @@ import (
 	"sync"
 )
 
-var tmpl = template.Must(template.ParseFiles("html/search.html", "html/locations.html", "html/locationInformation.html"))
-
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Добро пожаловать! Введите локацию в адресную строку.")
-}
-
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
-	err := tmpl.ExecuteTemplate(w, "search.html", nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func LocationHandler(w http.ResponseWriter, r *http.Request) {
-	loc := r.URL.Query().Get("location")
-
-	if loc == "" {
-		http.Error(w, "Локация не указана", http.StatusBadRequest)
-		return
-	}
-
-	locations := API.GetLocation(loc)
-	if len(locations.Hits) == 0 {
-		http.Error(w, "Локация не найдена", http.StatusBadRequest)
-		return
-	}
-
-	err := tmpl.ExecuteTemplate(w, "locations.html", locations)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
+var tmplLocInf = template.Must(template.ParseFiles("html/locationInformation.html"))
 
 func LocationInformationHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
@@ -124,7 +92,7 @@ func LocationInformationHandler(w http.ResponseWriter, r *http.Request) {
 		PlacesDescriptions: placesDescriptions,
 	}
 
-	err := tmpl.ExecuteTemplate(w, "locationInformation.html", data)
+	err := tmplLocInf.ExecuteTemplate(w, "locationInformation.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
