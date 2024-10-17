@@ -13,12 +13,12 @@ import (
 func StartServer(portNum int) error {
 	listenFd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM, 0)
 	if err != nil {
-		return fmt.Errorf("Ошибка при создании сокета: %v", err)
+		return fmt.Errorf("ошибка при создании сокета: %v", err)
 	}
 
 	err = unix.SetNonblock(listenFd, true)
 	if err != nil {
-		return fmt.Errorf("Ошибка при установке неблокирующего режима: %v", err)
+		return fmt.Errorf("ошибка при установке неблокирующего режима: %v", err)
 	}
 
 	addr := &unix.SockaddrInet4{Port: portNum}
@@ -26,22 +26,22 @@ func StartServer(portNum int) error {
 
 	err = unix.Bind(listenFd, addr)
 	if err != nil {
-		return fmt.Errorf("Ошибка при привязке сокета: %v", err)
+		return fmt.Errorf("ошибка при привязке сокета: %v", err)
 	}
 
 	err = unix.Listen(listenFd, unix.SOMAXCONN)
 	if err != nil {
-		return fmt.Errorf("Ошибка при прослушивании порта: %v", err)
+		return fmt.Errorf("ошибка при прослушивании порта: %v", err)
 	}
 
 	// Создаем UDP-сокет для DNS
 	dnsFd, err := unix.Socket(unix.AF_INET, unix.SOCK_DGRAM, unix.IPPROTO_UDP)
 	if err != nil {
-		return fmt.Errorf("Ошибка при создании UDP-сокета: %v", err)
+		return fmt.Errorf("ошибка при создании UDP-сокета: %v", err)
 	}
 	err = unix.SetNonblock(dnsFd, true)
 	if err != nil {
-		return fmt.Errorf("Ошибка при установке неблокирующего режима для UDP-сокета: %v", err)
+		return fmt.Errorf("ошибка при установке неблокирующего режима для UDP-сокета: %v", err)
 	}
 
 	// Адрес DNS-сервера (Google DNS)
@@ -63,10 +63,9 @@ func StartServer(portNum int) error {
 	for {
 		_, err := unix.Poll(pollFds, -1)
 		if err != nil {
-			return fmt.Errorf("Ошибка при вызове Poll: %v", err)
+			return fmt.Errorf("ошибка при вызове Poll: %v", err)
 		}
 
-		// Используем копию pollFds, чтобы избежать проблем с изменением слайса во время итерации
 		pollFdsCopy := make([]unix.PollFd, len(pollFds))
 		copy(pollFdsCopy, pollFds)
 
