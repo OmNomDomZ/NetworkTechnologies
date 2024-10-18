@@ -22,3 +22,4 @@
 * Прокси корректно закрывает соединения после их завершения.
 
 ## Видео работы
+[SOCKS5-Proxy.webm](https://github.com/user-attachments/assets/91ac0110-5628-4649-99ca-5594c9ad7d1c)
