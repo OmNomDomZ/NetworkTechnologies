@@ -23,3 +23,4 @@
 * Сервер возвращает клиенту информацию об успехе/неуспехе передачи.
 
 ## Видео работы
+[FileTransferTCP.webm](https://github.com/user-attachments/assets/bfd8ada7-2ec8-4399-b214-eda9053484ba)
