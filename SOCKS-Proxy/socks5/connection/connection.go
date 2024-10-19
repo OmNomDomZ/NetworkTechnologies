@@ -1,8 +1,10 @@
 package connection
 
+type State int
+
 const (
 	// Состояния подключения
-	StateHandshake = iota
+	StateHandshake State = iota
 	StateRequest
 	StateConnecting
 	StateForwarding
@@ -11,7 +13,7 @@ const (
 
 type Connection struct {
 	Fd         int
-	State      int
+	State      State
 	Buffer     []byte
 	PeerFd     int
 	AddrType   byte
